@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEE Vault - Web Node</title>
+    <style>
+        :root {
+            --tron-cyan: #00e5ff;
+            --tron-dark: #050a0f;
+            --tron-pink: #ff0055;
+            --grid-color: rgba(0, 229, 255, 0.05);
+        }
+        body {
+            background-color: var(--tron-dark);
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--tron-cyan);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .vault-container {
+            background: rgba(0, 10, 15, 0.8);
+            border: 1px solid var(--tron-cyan);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 229, 255, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            /* Geometric cut corners */
+            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+            backdrop-filter: blur(5px);
+        }
+        .header-box {
+            text-align: center;
+            border-bottom: 1px solid var(--tron-cyan);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h2 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--tron-cyan);
+        }
+        .subtitle {
+            color: var(--tron-pink);
+            font-size: 11px;
+            letter-spacing: 3px;
+            margin-top: 5px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-size: 12px;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            background: rgba(0, 229, 255, 0.05);
+            border: 1px solid var(--tron-cyan);
+            color: #fff;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s;
+        }
+        input:focus, textarea:focus {
+            background: rgba(0, 229, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: transparent;
+            border: 1px solid var(--tron-cyan);
+            color: var(--tron-cyan);
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: var(--tron-cyan);
+            color: var(--tron-dark);
+            box-shadow: 0 0 15px var(--tron-cyan);
+        }
+        .btn-pink {
+            border-color: var(--tron-pink);
+            color: var(--tron-pink);
+            width: 100%;
+            font-size: 14px;
+        }
+        .btn-pink:hover {
+            background: var(--tron-pink);
+            color: #fff;
+            box-shadow: 0 0 15px var(--tron-pink);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="vault-container">
+        <div class="header-box">
+            <h2>GEOMETRIC VAULT</h2>
+            <div class="subtitle">ZERO-TRUST NODE // V6.2</div>
+        </div>
+        
+        <div class="input-group">
+            <label>ENCRYPTION KEY</label>
+            <input type="password" id="password" placeholder="Enter Secure Password">
+        </div>
+        
+        <div class="input-group">
+            <label>PAYLOAD DATA</label>
+            <textarea id="message" rows="5" placeholder="Enter message to encrypt, or paste a GEE62 capsule to decrypt..."></textarea>
+        </div>
+        
+        <div class="action-grid">
+            <button onclick="alert('Encryption Core loading...')">ENCRYPT</button>
+            <button onclick="alert('Decryption Core loading...')">DECRYPT</button>
+        </div>
+        
+        <button class="btn-pink" onclick="alert('Connecting to anonymous wallet...')">SUPPORT THE ENGINE</button>
+    </div>
+<script>
+    // =============================================================================
+    // GEE V6.2: WEB NODE CORE (Zero-Trust Local Execution)
+    // =============================================================================
+    
+    // Utility functions for converting bytes to hex and back
+    const toHex = bytes => bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+    const fromHex = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+
+    // 1. PBKDF2 Key Derivation
+    async function deriveKeys(password, saltBytes) {
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveBits"]
+        );
+        const derived = await crypto.subtle.deriveBits(
+            {name: "PBKDF2", salt: saltBytes, iterations: 250000, hash: "SHA-256"}, keyMaterial, 512
+        );
+        const derivedArray = new Uint8Array(derived);
+        
+        const hmacKey = await crypto.subtle.importKey(
+            "raw", derivedArray.slice(32), {name: "HMAC", hash: "SHA-256"}, false, ["sign", "verify"]
+        );
+        
+        return { engineKey: derivedArray.slice(0, 32), hmacKey: hmacKey };
+    }
+
+    // 2. Geometric Stream Generation (Using WebCrypto SHA-256 as the Sponge)
+    async function generateStream(keyBytes, nonceBytes, length) {
+        let stream = new Uint8Array(length);
+        let counter = 0;
+        let generated = 0;
+        
+        while (generated < length) {
+            let blockData = new Uint8Array(keyBytes.length + nonceBytes.length + 4);
+            blockData.set(keyBytes, 0);
+            blockData.set(nonceBytes, keyBytes.length);
+            new DataView(blockData.buffer).setUint32(keyBytes.length + nonceBytes.length, counter, true);
+            
+            const hashBuffer = await crypto.subtle.digest("SHA-256", blockData);
+            const hashArray = new Uint8Array(hashBuffer);
+            
+            let toCopy = Math.min(hashArray.length, length - generated);
+            stream.set(hashArray.slice(0, toCopy), generated);
+            generated += toCopy;
+            counter++;
+        }
+        return stream;
+    }
+
+    // =============================================================================
+    // BUTTON ACTIONS
+    // =============================================================================
+
+    async function doEncrypt() {
+        const password = document.getElementById('password').value;
+        const message = document.getElementById('message').value;
+        
+        if (!password || !message) {
+            alert("Error: Password and Message are required.");
+            return;
+        }
+
+        try {
+            document.getElementById('message').value = "Generating Geometric State...";
+            
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const nonce = crypto.getRandomValues(new Uint8Array(16));
+            
+            const keys = await deriveKeys(password, salt);
+            const msgBytes = enc.encode(message);
+            
+            const keystream = await generateStream(keys.engineKey, nonce, msgBytes.length);
+            
+            let ciphertext = new Uint8Array(msgBytes.length);
+            for (let i = 0; i < msgBytes.length; i++) {
+                ciphertext[i] = msgBytes[i] ^ keystream[i];
+            }
+            
+            const signature = await crypto.subtle.sign("HMAC", keys.hmacKey, ciphertext);
+            const sigHex = toHex(new Uint8Array(signature));
+            
+            const capsule = `GEE-WEB.${toHex(salt)}.${toHex(nonce)}.${toHex(ciphertext)}.${sigHex}`;
+            
+            document.getElementById('message').value = capsule;
+            alert("Vault Sealed. Copy the text to send in Telegram.");
+            
+        } catch (e) {
+            alert("Encryption Failed: " + e.message);
+        }
+    }
+
+    async function doDecrypt() {
+        const password = document.getElementById('password').value;
+        const capsule = document.getElementById('message').value.trim();
+        
+        if (!password || !capsule) {
+            alert("Error: Password and GEE Capsule are required.");
+            return;
+        }
+
+        try {
+            const parts = capsule.split('.');
+            if (parts.length !== 5 || parts[0] !== "GEE-WEB") {
+                alert("Red Alert: Invalid Payload Format.");
+                return;
+            }
+            
+            const salt = fromHex(parts[1]);
+            const nonce = fromHex(parts[2]);
+            const ciphertext = fromHex(parts[3]);
+            const providedSig = fromHex(parts[4]);
+            
+            const keys = await deriveKeys(password, salt);
+            
+            // Verify HMAC Seal
+            const isValid = await crypto.subtle.verify("HMAC", keys.hmacKey, providedSig, ciphertext);
+            if (!isValid) {
+                document.getElementById('message').value = "";
+                alert("🚨 RED ALERT: Data tampered with or incorrect password. Decryption aborted.");
+                return;
+            }
+            
+            const keystream = await generateStream(keys.engineKey, nonce, ciphertext.length);
+            
+            let plaintextBytes = new Uint8Array(ciphertext.length);
+            for (let i = 0; i < ciphertext.length; i++) {
+                plaintextBytes[i] = ciphertext[i] ^ keystream[i];
+            }
+            
+            document.getElementById('message').value = dec.decode(plaintextBytes);
+            alert("Vault Unsealed.");
+            
+        } catch (e) {
+            alert("Red Alert: Core Decryption Failure. " + e.message);
+        }
+    }
+
+    // Attach logic to buttons
+    const buttons = document.querySelectorAll('button');
+    buttons[0].onclick = doEncrypt;
+    buttons[1].onclick = doDecrypt;
+</script>
+</body>
+</html>
